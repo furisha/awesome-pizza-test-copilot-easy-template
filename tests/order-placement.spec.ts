@@ -6,8 +6,8 @@ test.describe('Order Placement', () => {
     await expect(page.locator('.menu-item').first()).toBeVisible();
   });
 
-  // TC-05: Place Order Button State — Disabled
-  test.describe('TC-05: Place Order button is disabled', () => {
+  // TC-01: Place Order Button State — Disabled
+  test.describe('TC-01: Place Order button is disabled', () => {
     test('on page load with empty cart and no name', async ({ page }) => {
       await expect(page.getByRole('button', { name: 'Place Order' })).toBeDisabled();
     });
@@ -23,15 +23,15 @@ test.describe('Order Placement', () => {
     });
   });
 
-  // TC-06: Place Order Button State — Enabled
-  test('TC-06: Place Order button is enabled when name and cart are both filled', async ({ page }) => {
+  // TC-02: Place Order Button State — Enabled
+  test('TC-02: Place Order button is enabled when name and cart are both filled', async ({ page }) => {
     await page.getByLabel('Your Name:').fill('Alice');
     await page.locator('.menu-item').first().locator('.quantity-btn').last().click();
     await expect(page.getByRole('button', { name: 'Place Order' })).toBeEnabled();
   });
 
-  // TC-07: Successful Order Placement
-  test('TC-07: successfully places an order and updates the UI', async ({ page }) => {
+  // TC-03: Successful Order Placement
+  test('TC-03: successfully places an order and updates the UI', async ({ page }) => {
     // Add 2x Pepperoni Pizza
     const pepperoni = page.locator('.menu-item').filter({ hasText: 'Pepperoni Pizza' });
     await pepperoni.locator('.quantity-btn').last().click();
@@ -63,8 +63,8 @@ test.describe('Order Placement', () => {
     await expect(page.locator('.status-badge')).toHaveText('RECEIVED');
   });
 
-  // TC-08: Order Placement with Multiple Items
-  test('TC-08: places an order with multiple different pizza types', async ({ page }) => {
+  // TC-04: Order Placement with Multiple Items
+  test('TC-04: places an order with multiple different pizza types', async ({ page }) => {
     const margherita = page.locator('.menu-item').filter({ hasText: 'Margherita Pizza' });
     const bbqChicken = page.locator('.menu-item').filter({ hasText: 'BBQ Chicken Pizza' });
 
