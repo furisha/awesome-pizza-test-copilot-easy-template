@@ -1,0 +1,23 @@
+{
+  "name": "awesome-pizza-test-copilot-easy-template",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/furisha/awesome-pizza-test-copilot-easy-template.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/furisha/awesome-pizza-test-copilot-easy-template/issues"
+  },
+  "homepage": "https://github.com/furisha/awesome-pizza-test-copilot-easy-template#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^25.6.0"
+  }
+}
