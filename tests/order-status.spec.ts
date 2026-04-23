@@ -1,4 +1,6 @@
 import { test, expect, request } from '@playwright/test';
+import { OrderLookupPage } from './pages/OrderLookupPage';
+import { OrderStatusPage } from './pages/OrderStatusPage';
 
 // Helper: place an order via the API and return its ID
 async function createOrder(baseURL: string): Promise<string> {
@@ -21,29 +23,23 @@ async function setOrderDelivering(baseURL: string, orderId: string): Promise<voi
   await ctx.dispose();
 }
 
-// Shared setup: navigate to page and look up an order by ID
-async function lookUpOrder(page: any, orderId: string) {
-  await page.goto('/');
-  await page.locator('#order-id').fill(orderId);
-  await page.getByRole('button', { name: 'Look Up Order' }).click();
-  await expect(page.locator('#order-details')).toBeVisible();
-}
-
 test.describe('TC-01: Order Status Transition — RECEIVED to DELIVERING', () => {
   test('clicking Mark as Delivering updates badge and swaps action buttons', async ({ page, baseURL }) => {
     const orderId = await createOrder(baseURL!);
-    await lookUpOrder(page, orderId);
+    const lookupPage = new OrderLookupPage(page);
+    const statusPage = new OrderStatusPage(page);
 
-    await expect(page.locator('.status-badge')).toHaveText('RECEIVED');
-    await expect(page.getByRole('button', { name: 'Mark as Delivering' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Cancel Order' })).toBeVisible();
+    await lookupPage.gotoAndLookUpOrder(orderId);
 
-    await page.getByRole('button', { name: 'Mark as Delivering' }).click();
+    await expect(statusPage.statusBadge).toHaveText('RECEIVED');
+    await expect(statusPage.markAsDeliveringButton).toBeVisible();
+    await expect(statusPage.cancelOrderButton).toBeVisible();
 
-    await expect(page.locator('.status-badge')).toHaveText('DELIVERING');
-    await expect(page.getByRole('button', { name: 'Mark as Delivered' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Mark as Delivering' })).toBeHidden();
-    await expect(page.getByRole('button', { name: 'Cancel Order' })).toBeHidden();
+    await statusPage.markAsDelivering();
+
+    await expect(statusPage.markAsDeliveredButton).toBeVisible();
+    await expect(statusPage.markAsDeliveringButton).toBeHidden();
+    await expect(statusPage.cancelOrderButton).toBeHidden();
   });
 });
 
@@ -51,29 +47,34 @@ test.describe('TC-02: Order Status Transition — DELIVERING to DELIVERED', () =
   test('clicking Mark as Delivered updates badge and removes all action buttons', async ({ page, baseURL }) => {
     const orderId = await createOrder(baseURL!);
     await setOrderDelivering(baseURL!, orderId);
-    await lookUpOrder(page, orderId);
 
-    await expect(page.locator('.status-badge')).toHaveText('DELIVERING');
-    await expect(page.getByRole('button', { name: 'Mark as Delivered' })).toBeVisible();
+    const lookupPage = new OrderLookupPage(page);
+    const statusPage = new OrderStatusPage(page);
 
-    await page.getByRole('button', { name: 'Mark as Delivered' }).click();
+    await lookupPage.gotoAndLookUpOrder(orderId);
 
-    await expect(page.locator('.status-badge')).toHaveText('DELIVERED');
-    await expect(page.getByRole('button', { name: 'Mark as Delivered' })).toBeHidden();
+    await expect(statusPage.statusBadge).toHaveText('DELIVERING');
+    await expect(statusPage.markAsDeliveredButton).toBeVisible();
+
+    await statusPage.markAsDelivered();
+
+    await expect(statusPage.markAsDeliveredButton).toBeHidden();
   });
 });
 
 test.describe('TC-03: Order Status Transition — RECEIVED to CANCELED', () => {
   test('clicking Cancel Order updates badge and removes all action buttons', async ({ page, baseURL }) => {
     const orderId = await createOrder(baseURL!);
-    await lookUpOrder(page, orderId);
+    const lookupPage = new OrderLookupPage(page);
+    const statusPage = new OrderStatusPage(page);
 
-    await expect(page.locator('.status-badge')).toHaveText('RECEIVED');
+    await lookupPage.gotoAndLookUpOrder(orderId);
 
-    await page.getByRole('button', { name: 'Cancel Order' }).click();
+    await expect(statusPage.statusBadge).toHaveText('RECEIVED');
 
-    await expect(page.locator('.status-badge')).toHaveText('CANCELED');
-    await expect(page.getByRole('button', { name: 'Mark as Delivering' })).toBeHidden();
-    await expect(page.getByRole('button', { name: 'Cancel Order' })).toBeHidden();
+    await statusPage.cancelOrder();
+
+    await expect(statusPage.markAsDeliveringButton).toBeHidden();
+    await expect(statusPage.cancelOrderButton).toBeHidden();
   });
 });

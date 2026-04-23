@@ -1,89 +1,75 @@
 import { test, expect } from '@playwright/test';
+import { OrderPlacementPage } from './pages/OrderPlacementPage';
+import { NotificationPage } from './pages/NotificationPage';
 
 test.describe('Order Placement', () => {
+  let orderPage: OrderPlacementPage;
+
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await expect(page.locator('.menu-item').first()).toBeVisible();
+    orderPage = new OrderPlacementPage(page);
+    await orderPage.goto();
   });
 
   // TC-01: Place Order Button State — Disabled
   test.describe('TC-01: Place Order button is disabled', () => {
-    test('on page load with empty cart and no name', async ({ page }) => {
-      await expect(page.getByRole('button', { name: 'Place Order' })).toBeDisabled();
+    test('on page load with empty cart and no name', async () => {
+      await expect(orderPage.placeOrderButton).toBeDisabled();
     });
 
-    test('when name is filled but cart is empty', async ({ page }) => {
-      await page.getByLabel('Your Name:').fill('Alice');
-      await expect(page.getByRole('button', { name: 'Place Order' })).toBeDisabled();
+    test('when name is filled but cart is empty', async () => {
+      await orderPage.fillName('Alice');
+      await expect(orderPage.placeOrderButton).toBeDisabled();
     });
 
-    test('when cart has items but name is empty', async ({ page }) => {
-      await page.locator('.menu-item').first().locator('.quantity-btn').last().click();
-      await expect(page.getByRole('button', { name: 'Place Order' })).toBeDisabled();
+    test('when cart has items but name is empty', async () => {
+      await orderPage.addFirstItemToCart();
+      await expect(orderPage.placeOrderButton).toBeDisabled();
     });
   });
 
   // TC-02: Place Order Button State — Enabled
-  test('TC-02: Place Order button is enabled when name and cart are both filled', async ({ page }) => {
-    await page.getByLabel('Your Name:').fill('Alice');
-    await page.locator('.menu-item').first().locator('.quantity-btn').last().click();
-    await expect(page.getByRole('button', { name: 'Place Order' })).toBeEnabled();
+  test('TC-02: Place Order button is enabled when name and cart are both filled', async () => {
+    await orderPage.fillName('Alice');
+    await orderPage.addFirstItemToCart();
+    await expect(orderPage.placeOrderButton).toBeEnabled();
   });
 
   // TC-03: Successful Order Placement
   test('TC-03: successfully places an order and updates the UI', async ({ page }) => {
-    // Add 2x Pepperoni Pizza
-    const pepperoni = page.locator('.menu-item').filter({ hasText: 'Pepperoni Pizza' });
-    await pepperoni.locator('.quantity-btn').last().click();
-    await pepperoni.locator('.quantity-btn').last().click();
+    const notification = new NotificationPage(page);
 
-    await page.getByLabel('Your Name:').fill('Alice');
+    await orderPage.addItemToCart('Pepperoni Pizza', 2);
+    await orderPage.fillName('Alice');
 
-    const orderResponsePromise = page.waitForResponse('**/api/orders');
-    await page.getByRole('button', { name: 'Place Order' }).click();
-    const orderResponse = await orderResponsePromise;
+    const orderResponse = await orderPage.placeOrder();
     const body = await orderResponse.json();
 
     expect(orderResponse.status()).toBe(201);
     expect(body.success).toBe(true);
     const orderId = body.data.id;
 
-    // Success notification
-    await expect(page.locator('#notification')).toContainText('Order placed successfully');
-    await expect(page.locator('#notification')).toContainText(orderId);
-
-    // Cart and name are cleared, button is disabled
-    await expect(page.locator('.empty-cart')).toBeVisible();
-    await expect(page.getByLabel('Your Name:')).toHaveValue('');
-    await expect(page.getByRole('button', { name: 'Place Order' })).toBeDisabled();
-
-    // Order lookup field auto-filled and details shown
-    await expect(page.locator('#order-id')).toHaveValue(orderId);
-    await expect(page.locator('#order-details')).toBeVisible();
-    await expect(page.locator('.status-badge')).toHaveText('RECEIVED');
+    await notification.expectSuccess('Order placed successfully');
+    await expect(orderPage.emptyCart).toBeVisible();
+    await expect(orderPage.customerNameInput).toHaveValue('');
+    await expect(orderPage.placeOrderButton).toBeDisabled();
+    await expect(orderPage.orderIdInput).toHaveValue(orderId);
+    await expect(orderPage.orderDetails).toBeVisible();
+    await expect(orderPage.statusBadge).toHaveText('RECEIVED');
   });
 
   // TC-04: Order Placement with Multiple Items
-  test('TC-04: places an order with multiple different pizza types', async ({ page }) => {
-    const margherita = page.locator('.menu-item').filter({ hasText: 'Margherita Pizza' });
-    const bbqChicken = page.locator('.menu-item').filter({ hasText: 'BBQ Chicken Pizza' });
+  test('TC-04: places an order with multiple different pizza types', async () => {
+    await orderPage.addItemToCart('Margherita Pizza', 1);
+    await orderPage.addItemToCart('BBQ Chicken Pizza', 2);
+    await orderPage.fillName('Bob');
 
-    await margherita.locator('.quantity-btn').last().click(); // 1x Margherita
-    await bbqChicken.locator('.quantity-btn').last().click(); // 1x BBQ Chicken
-    await bbqChicken.locator('.quantity-btn').last().click(); // 2x BBQ Chicken
-
-    await page.getByLabel('Your Name:').fill('Bob');
-
-    const orderResponsePromise = page.waitForResponse('**/api/orders');
-    await page.getByRole('button', { name: 'Place Order' }).click();
-    const orderResponse = await orderResponsePromise;
+    const orderResponse = await orderPage.placeOrder();
     const body = await orderResponse.json();
 
     expect(body.success).toBe(true);
 
-    // Order details show both items with correct quantities
-    await expect(page.locator('#order-details')).toBeVisible();
-    await expect(page.locator('.content-item').filter({ hasText: 'Margherita Pizza' })).toContainText('\u00d71');
-    await expect(page.locator('.content-item').filter({ hasText: 'BBQ Chicken Pizza' })).toContainText('\u00d72');
+    await expect(orderPage.orderDetails).toBeVisible();
+    await expect(orderPage.getOrderItem('Margherita Pizza')).toContainText('\u00d71');
+    await expect(orderPage.getOrderItem('BBQ Chicken Pizza')).toContainText('\u00d72');
   });
 });
