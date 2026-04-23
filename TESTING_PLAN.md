@@ -164,7 +164,21 @@ RECEIVED → CANCELED
 
 ---
 
-### TC-15: Notification Auto-Dismiss
+### TC-15: Notification — Success
+- **Scenario**: A success notification appears after a successful action
+- **Steps**: Look up a valid order ID
+- **Expected**: Success notification appears with message containing "Order found"
+
+---
+
+### TC-15b: Notification — Error
+- **Scenario**: An error notification appears when an action fails
+- **Steps**: Look up a non-existent order ID
+- **Expected**: Error notification appears with message containing "Order not found"
+
+---
+
+### TC-15c: Notification Auto-Dismiss
 - **Scenario**: Notifications disappear automatically
 - **Steps**: Trigger any success or error notification
 - **Expected**: Notification is visible immediately, then disappears after ~3 seconds
@@ -199,10 +213,10 @@ RECEIVED → CANCELED
 
 ---
 
-### TC-20: API — Invalid Status Update
-- **Scenario**: API rejects unknown status values
-- **Steps**: PUT `/api/orders/:id` with `{"status": "UNKNOWN"}`
-- **Expected**: `success: false` with message listing valid statuses
+### TC-20: API — Update Order Status Validation
+- **Scenario**: API rejects an invalid status value on order update
+- **Steps**: PUT `/api/orders/:id` with `{ status: 'UNKNOWN' }`
+- **Expected**: `400` response with `success: false` and error message listing valid statuses (`RECEIVED`, `DELIVERING`, `DELIVERED`, `CANCELED`)
 
 ---
 
@@ -222,16 +236,34 @@ RECEIVED → CANCELED
 ```
 tests/
 ├── menu.spec.ts              # TC-01: menu loading, item display, quantity controls
-├── cart.spec.ts              # TC-02, TC-03, TC-04: adding, reducing, removing items
-├── order-placement.spec.ts   # TC-05, TC-06, TC-07, TC-08: button state, happy path, multi-item
-├── order-lookup.spec.ts      # TC-09, TC-10, TC-11: valid/invalid lookup, Enter key
-├── order-status.spec.ts      # TC-12, TC-13, TC-14: RECEIVED→DELIVERING→DELIVERED, CANCELED
-├── notifications.spec.ts     # TC-15: auto-dismiss, success/error appearance
-├── theme.spec.ts             # TC-16, TC-17, TC-18: toggle, persistence across reload
-└── api.spec.ts               # TC-19, TC-20: direct API validation (no UI)
+│                             # TC-02: adding items to cart
+│                             # TC-03: reducing item quantity to zero
+│                             # TC-04: remove button in cart
+├── order-placement.spec.ts   # TC-05, TC-06: place order button state (disabled/enabled)
+│                             # TC-07: successful order placement (happy path)
+│                             # TC-08: order placement with multiple items
+├── order-lookup.spec.ts      # TC-09: valid order lookup
+│                             # TC-10: invalid order lookup
+│                             # TC-11: lookup via Enter key
+├── order-status.spec.ts      # TC-12: RECEIVED → DELIVERING transition
+│                             # TC-13: DELIVERING → DELIVERED transition
+│                             # TC-14: RECEIVED → CANCELED transition
+├── notifications.spec.ts     # TC-15: success notification
+│                             # TC-15b: error notification
+│                             # TC-15c: auto-dismiss
+├── theme.spec.ts             # TC-16: light → dark toggle
+│                             # TC-17: dark → light toggle
+│                             # TC-18: theme persistence across reload
+├── api.spec.ts               # TC-19: create order input validation (API only)
+│                             # TC-20: update order status validation (API only)
+└── pages/
+    ├── MenuPage.ts
+    ├── NotificationPage.ts
+    ├── OrderLookupPage.ts
+    ├── OrderPlacementPage.ts
+    └── OrderStatusPage.ts
 ```
 
 **Notes:**
-locators across spec files
 - `api.spec.ts` — uses Playwright's `request` fixture directly, no browser needed
-- Spec files map 1:1 to feature areas, allowing targeted runs (e.g. `npx playwright test cart`)
+- Spec files map 1:1 to feature areas, allowing targeted runs (e.g. `npx playwright test menu`)

@@ -41,4 +41,8 @@ export class MenuPage {
   getIncrementButton(itemIndex: number): Locator {
     return this.menuItems.nth(itemIndex).locator('.quantity-btn').last();
   }
+
+  getQuantityDisplay(itemIndex: number): Locator {
+    return this.menuItems.nth(itemIndex).locator('.quantity-display');
+  }
 }

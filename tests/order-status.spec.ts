@@ -37,6 +37,7 @@ test.describe('TC-01: Order Status Transition — RECEIVED to DELIVERING', () =>
 
     await statusPage.markAsDelivering();
 
+    await expect(statusPage.statusBadge).toHaveText('DELIVERING');
     await expect(statusPage.markAsDeliveredButton).toBeVisible();
     await expect(statusPage.markAsDeliveringButton).toBeHidden();
     await expect(statusPage.cancelOrderButton).toBeHidden();
@@ -58,6 +59,7 @@ test.describe('TC-02: Order Status Transition — DELIVERING to DELIVERED', () =
 
     await statusPage.markAsDelivered();
 
+    await expect(statusPage.statusBadge).toHaveText('DELIVERED');
     await expect(statusPage.markAsDeliveredButton).toBeHidden();
   });
 });
@@ -74,7 +76,9 @@ test.describe('TC-03: Order Status Transition — RECEIVED to CANCELED', () => {
 
     await statusPage.cancelOrder();
 
+    await expect(statusPage.statusBadge).toHaveText('CANCELED');
     await expect(statusPage.markAsDeliveringButton).toBeHidden();
     await expect(statusPage.cancelOrderButton).toBeHidden();
+    await expect(statusPage.markAsDeliveredButton).toBeHidden();
   });
 });

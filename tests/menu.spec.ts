@@ -18,7 +18,7 @@ test('TC-01: menu is populated from the API', async ({ page }) => {
   await expect(menuPage.menuItems).toHaveCount(body.data.length);
 });
 
-test.describe('TC-02: Menu Loading', () => {
+test.describe('TC-01: Menu Display', () => {
   let menuPage: MenuPage;
 
   test.beforeEach(async ({ page }) => {
@@ -58,5 +58,66 @@ test.describe('TC-02: Menu Loading', () => {
     expect(count).toBeGreaterThan(0);
 
     await expect(menuPage.quantityDisplays).toHaveText(Array(count).fill('0'));
+  });
+});
+
+test.describe('TC-02: Adding Items to Cart', () => {
+  let menuPage: MenuPage;
+
+  test.beforeEach(async ({ page }) => {
+    menuPage = new MenuPage(page);
+    await menuPage.goto();
+  });
+
+  test('incrementing a menu item updates its quantity display and adds it to the cart', async ({ page }) => {
+    const firstItem = menuPage.getMenuItem(0);
+    const itemName = await firstItem.getByRole('heading').innerText();
+
+    await menuPage.getIncrementButton(0).click();
+
+    await expect(menuPage.getQuantityDisplay(0)).toHaveText('1');
+    await expect(page.locator('.cart-item-name').filter({ hasText: itemName })).toBeVisible();
+    await expect(page.locator('.cart-item').filter({ hasText: itemName }).locator('.cart-item-quantity')).toContainText('1');
+    await expect(page.locator('#total-items')).toHaveText('1');
+  });
+});
+
+test.describe('TC-03: Reducing Item Quantity to Zero Removes from Cart', () => {
+  let menuPage: MenuPage;
+
+  test.beforeEach(async ({ page }) => {
+    menuPage = new MenuPage(page);
+    await menuPage.goto();
+  });
+
+  test('decrementing to zero removes the item from the cart and shows empty state', async ({ page }) => {
+    await menuPage.getIncrementButton(0).click();
+    await expect(menuPage.getQuantityDisplay(0)).toHaveText('1');
+
+    await menuPage.getDecrementButton(0).click();
+
+    await expect(menuPage.getQuantityDisplay(0)).toHaveText('0');
+    await expect(page.locator('.empty-cart')).toBeVisible();
+    await expect(page.locator('#total-items')).toHaveText('0');
+  });
+});
+
+test.describe('TC-04: Remove Button in Cart', () => {
+  let menuPage: MenuPage;
+
+  test.beforeEach(async ({ page }) => {
+    menuPage = new MenuPage(page);
+    await menuPage.goto();
+  });
+
+  test('clicking Remove in the cart removes the item and resets its menu quantity to 0', async ({ page }) => {
+    await menuPage.getIncrementButton(0).click();
+    await expect(menuPage.getQuantityDisplay(0)).toHaveText('1');
+
+    await page.locator('.remove-item-btn').first().click();
+
+    await expect(page.locator('.empty-cart')).toBeVisible();
+    await expect(menuPage.getQuantityDisplay(0)).toHaveText('0');
+    await expect(page.locator('#total-items')).toHaveText('0');
   });
 });

@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import { type Locator, type Page } from '@playwright/test';
 
 export class OrderStatusPage {
   readonly page: Page;
@@ -17,16 +17,13 @@ export class OrderStatusPage {
 
   async markAsDelivering() {
     await this.markAsDeliveringButton.click();
-    await expect(this.statusBadge).toHaveText('DELIVERING');
   }
 
   async markAsDelivered() {
     await this.markAsDeliveredButton.click();
-    await expect(this.statusBadge).toHaveText('DELIVERED');
   }
 
   async cancelOrder() {
     await this.cancelOrderButton.click();
-    await expect(this.statusBadge).toHaveText('CANCELED');
   }
 }
