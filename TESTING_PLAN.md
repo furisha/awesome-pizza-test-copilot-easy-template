@@ -246,14 +246,95 @@ Interactive API documentation is available via Swagger UI:
 
 ---
 
+### TC-21: API — Daily Menu Response Shape
+- **Scenario**: `GET /api/daily-menu` returns a well-formed response
+- **Steps**: Send GET request to `/api/daily-menu`
+- **Expected**: 200 status, `success: true`, `data` is an array of exactly 5 items; each item has non-empty `name`, `description`, and `imageUrl` string fields
+- **Note**: Items do not include an `id` field; the image field is named `imageUrl`
+
+---
+
+### TC-22: API — Successful Order Creation
+- **Scenario**: `POST /api/orders` with valid data creates an order
+- **Steps**: POST with `{ sender: 'Alice', contents: [{ name: 'Margherita Pizza', quantity: 2 }] }`
+- **Expected**: 201 status, `success: true`, response includes generated non-empty `id`, `sender` matches input, `status: 'RECEIVED'`, `contents` match input
+
+---
+
+### TC-23: API — Order With Multiple Items
+- **Scenario**: Order contents with multiple distinct pizza items are preserved
+- **Steps**: POST with two items (e.g. Margherita × 1 and BBQ Chicken × 2)
+- **Expected**: 201 status, `data.contents` length is 2, all items appear with correct quantities
+
+---
+
+### TC-24: API — Fetch Order By ID
+- **Scenario**: `GET /api/orders/:id` returns the correct order
+- **Steps**: Create an order, then GET it by its returned `id`
+- **Expected**: 200 status, `success: true`, response data matches `id`, `sender`, `status`, and `contents` of the created order
+
+---
+
+### TC-25: API — Fetch Non-Existent Order Returns 404
+- **Scenario**: `GET /api/orders/:id` with an unknown ID
+- **Steps**: GET `/api/orders/nonexistent-order-id`
+- **Expected**: 404 status, `success: false`, message matches `/not found/i`
+
+---
+
+### TC-26: API — Status Transition RECEIVED to DELIVERING
+- **Scenario**: Valid status advance via `PUT /api/orders/:id`
+- **Steps**: Create order; PUT `{ status: 'DELIVERING' }`
+- **Expected**: 200 status, `success: true`, `data.status` is `'DELIVERING'`
+
+---
+
+### TC-27: API — Status Transition DELIVERING to DELIVERED
+- **Scenario**: Valid status advance through the full delivery flow
+- **Steps**: Create order; advance to DELIVERING; PUT `{ status: 'DELIVERED' }`
+- **Expected**: 200 status, `success: true`, `data.status` is `'DELIVERED'`
+
+---
+
+### TC-28: API — Status Transition RECEIVED to CANCELED
+- **Scenario**: Order cancellation via `PUT /api/orders/:id`
+- **Steps**: Create order; PUT `{ status: 'CANCELED' }`
+- **Expected**: 200 status, `success: true`, `data.status` is `'CANCELED'`
+
+---
+
+### TC-29: API — Update Non-Existent Order Returns 404
+- **Scenario**: `PUT /api/orders/:id` with an unknown ID
+- **Steps**: PUT `/api/orders/nonexistent-order-id` with `{ status: 'DELIVERING' }`
+- **Expected**: 404 status, `success: false`
+
+---
+
+### TC-30: API — Status Transition from Terminal State
+- **Scenario**: API behavior when updating orders in terminal states (`DELIVERED`, `CANCELED`)
+- **Steps**:
+  1. Advance order to `DELIVERED`; attempt PUT with `{ status: 'RECEIVED' }`
+  2. Advance order to `CANCELED`; attempt PUT with `{ status: 'DELIVERING' }`
+- **Expected**: 200 status, `success: true` — the API does not enforce terminal state immutability
+- **Note**: Known gap — the API allows re-transitioning orders from terminal states
+
+---
+
+### TC-31: API — Zero Quantity Item Rejected
+- **Scenario**: Order contents with a zero-quantity item should be rejected
+- **Steps**: POST `/api/orders` with `contents: [{ name: 'Margherita Pizza', quantity: 0 }]`
+- **Expected**: 400 status, `success: false`
+
+---
+
 ## Test Priorities
 
 | Priority | Test Cases |
 |----------|------------|
 | Critical | TC-07, TC-09, TC-12, TC-13, TC-14 |
-| High     | TC-01, TC-02, TC-05, TC-06, TC-10 |
-| Medium   | TC-03, TC-04, TC-08, TC-11, TC-15 |
-| Low      | TC-16, TC-17, TC-18, TC-19, TC-20 |
+| High     | TC-01, TC-02, TC-05, TC-06, TC-10, TC-22, TC-24, TC-26, TC-27, TC-28 |
+| Medium   | TC-03, TC-04, TC-08, TC-11, TC-15, TC-21, TC-23, TC-25, TC-29 |
+| Low      | TC-16, TC-17, TC-18, TC-19, TC-20, TC-30, TC-31 |
 
 ---
 
@@ -261,6 +342,20 @@ Interactive API documentation is available via Swagger UI:
 
 ```
 tests/
+├── api/
+│   ├── menu.spec.ts          # TC-21: daily menu response shape
+│   ├── orders-create.spec.ts # TC-19: create order input validation
+│   │                         # TC-22: successful order creation
+│   │                         # TC-23: order with multiple items
+│   │                         # TC-31: zero quantity item rejected
+│   ├── orders-fetch.spec.ts  # TC-24: fetch order by ID
+│   │                         # TC-25: fetch non-existent order (404)
+│   └── orders-status.spec.ts # TC-20: update order status validation
+│                             # TC-26: status transition RECEIVED → DELIVERING
+│                             # TC-27: status transition DELIVERING → DELIVERED
+│                             # TC-28: status transition RECEIVED → CANCELED
+│                             # TC-29: update non-existent order (404)
+│                             # TC-30: invalid transition from terminal state
 ├── menu.spec.ts              # TC-01: menu loading, item display, quantity controls
 │                             # TC-02: adding items to cart
 │                             # TC-03: reducing item quantity to zero
@@ -280,8 +375,6 @@ tests/
 ├── theme.spec.ts             # TC-16: light → dark toggle
 │                             # TC-17: dark → light toggle
 │                             # TC-18: theme persistence across reload
-├── api.spec.ts               # TC-19: create order input validation (API only)
-│                             # TC-20: update order status validation (API only)
 └── pages/
     ├── MenuPage.ts
     ├── NotificationPage.ts
