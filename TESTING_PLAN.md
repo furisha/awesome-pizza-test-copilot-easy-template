@@ -56,6 +56,32 @@ RECEIVED → CANCELED
 
 ---
 
+## API Documentation
+
+Interactive API documentation is available via Swagger UI:
+
+| File | Purpose |
+|------|---------|
+| `swagger.json` | OpenAPI 3.0.3 specification — schemas, endpoints, request/response examples |
+| `swagger-ui.html` | Self-contained Swagger UI viewer (CDN-bundled, no install required) |
+
+**To open the docs:**
+1. Double-click `swagger-ui.html`, or run:
+   ```powershell
+   Start-Process swagger-ui.html
+   ```
+2. The spec is embedded in the HTML — no local server needed to view the documentation.
+3. To use **Try it out** and send real requests, start the app first (`http://localhost:3000`).
+
+---
+
+## Naming Convention
+
+- Use sequential test case IDs (e.g., TC-05, TC-06, TC-07) instead of variants like TC-05a, TC-05b, TC-05c.
+- Each `.spec.ts` file has its own numbering, starting from TC-01.
+
+---
+
 ## Test Plan
 
 ### TC-01: Menu Loading
