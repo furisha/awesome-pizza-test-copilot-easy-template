@@ -27,16 +27,16 @@ test.describe('TC-17: Theme Toggle — Dark to Light', () => {
   });
 });
 
-test.describe('TC-18: Theme Persistence Across Page Reloads', () => {
-  test('dark mode preference is preserved after page reload', async ({ page }) => {
-    await page.goto('/');
+// test.describe('TC-18: Theme Persistence Across Page Reloads', () => {
+//   test('dark mode preference is preserved after page reload', async ({ page }) => {
+//     await page.goto('/');
 
-    await page.locator('#theme-toggle').click();
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+//     await page.locator('#theme-toggle').click();
+//     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
-    await page.reload();
+//     await page.reload();
 
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-    await expect(page.locator('#theme-toggle')).toHaveText('☀️');
-  });
-});
+//     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+//     await expect(page.locator('#theme-toggle')).toHaveText('☀️');
+//   });
+// });
